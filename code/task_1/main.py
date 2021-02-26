@@ -1,4 +1,5 @@
 import const
+import utils
 import os.path
 import cv2
 import numpy as np
@@ -57,7 +58,8 @@ if __name__ == '__main__':
     # Write files
     cv2.imwrite(os.path.join(const.DIR_OUT, 'task_1\\left_2.png'), im2_l)
     cv2.imwrite(os.path.join(const.DIR_OUT, 'task_1\\right_2.png'), im2_r)
-    np.savetxt(os.path.join(const.DIR_PARAMS, 'left_camera_intrinsics_cam_mtx.csv'), cam_mtx_l)
-    np.savetxt(os.path.join(const.DIR_PARAMS, 'left_camera_intrinsics_dst.csv'), dst_l)
-    np.savetxt(os.path.join(const.DIR_PARAMS, 'right_camera_intrinsics_cam_mtx.csv'), cam_mtx_r)
-    np.savetxt(os.path.join(const.DIR_PARAMS, 'right_camera_intrinsics_dst.csv'), dst_r)
+
+    utils.write_arrays(os.path.join(const.DIR_PARAMS, 'left_camera_intrinsics.xml'),
+                       {'cam_mtx_l': cam_mtx_l, 'dst_l': dst_l})
+    utils.write_arrays(os.path.join(const.DIR_PARAMS, 'right_camera_intrinsics.xml'),
+                       {'cam_mtx_r': cam_mtx_l, 'dst_r': dst_r})

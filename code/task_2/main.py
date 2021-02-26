@@ -35,12 +35,15 @@ def load_intrinsics(dir_params: str = const.DIR_PARAMS):
         `left camera matrix, left distortion coefficients, right camera matrix,
         right distortion coefficients`
     """
-    cam_mtx_l = np.loadtxt(os.path.join(dir_params, 'left_camera_intrinsics_cam_mtx.csv'))
-    dst_l = np.loadtxt(os.path.join(dir_params, 'left_camera_intrinsics_dst.csv'))
-    cam_mtx_r = np.loadtxt(os.path.join(dir_params, 'right_camera_intrinsics_cam_mtx.csv'))
-    dst_r = np.loadtxt(os.path.join(dir_params, 'right_camera_intrinsics_dst.csv'))
+    left_camera_intrinsics = utils.read_arrays(
+        os.path.join(const.DIR_PARAMS, 'left_camera_intrinsics.xml'),
+        ['cam_mtx_l', 'dst_l'])
+    right_camera_intrinsics = utils.read_arrays(
+        os.path.join(const.DIR_PARAMS, 'right_camera_intrinsics.xml'),
+        ['cam_mtx_r', 'dst_r'])
 
-    return cam_mtx_l, dst_l, cam_mtx_r, dst_r
+    return left_camera_intrinsics['cam_mtx_l'], left_camera_intrinsics['dst_l'], \
+           right_camera_intrinsics['cam_mtx_r'], right_camera_intrinsics['dst_r']
 
 
 def stereo_calibrate(img, intrinsics):
@@ -62,9 +65,9 @@ def stereo_calibrate(img, intrinsics):
     # Perform stereo calibration and extract rotation, translation,
     # essential and fundamental matrices
     _params = cv2.stereoCalibrate(
-                np.array([obj_pt]), np.array([crn_l]), np.array([crn_r]),
-                cam_mtx_l, dst_l, cam_mtx_r, dst_r, (480, 640),
-                flags=cv2.CALIB_FIX_INTRINSIC)
+        np.array([obj_pt]), np.array([crn_l]), np.array([crn_r]),
+        cam_mtx_l, dst_l, cam_mtx_r, dst_r, (480, 640),
+        flags=cv2.CALIB_FIX_INTRINSIC)
     _, cam_mtx_l, dst_l, cam_mtx_r, dst_r, R, T, E, F = _params
 
     # In the following section, we verify the calibration by
