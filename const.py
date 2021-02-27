@@ -7,4 +7,4 @@ DIR_OUT = path.join(DIR_BASE, 'output')
 DIR_PARAMS = path.join(DIR_BASE, 'parameters')
 
 SIZE_GRID = (9, 6)
-SIZE_IMG = (480, 640)
+SIZE_IMG = (640, 480)

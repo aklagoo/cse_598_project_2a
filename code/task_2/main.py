@@ -70,6 +70,9 @@ def stereo_calibrate(img, intrinsics):
         flags=cv2.CALIB_FIX_INTRINSIC)
     _, cam_mtx_l, dst_l, cam_mtx_r, dst_r, R, T, E, F = _params
 
+    # Extract stereo rectification parameters
+    R_l, R_r, P_l, P_r, Q, roi_l, roi_r = cv2.stereoRectify(cam_mtx_l, dst_l, cam_mtx_r, dst_r, const.SIZE_IMG, R, T)
+
     # In the following section, we verify the calibration by
     # triangulating and plotting these points in 3D. We begin by
     # undistorting the extracted corners.
@@ -95,9 +98,26 @@ def stereo_calibrate(img, intrinsics):
     utils.plot_camera(ax, R, T)
     plt.show()
 
+    return T, R, F, E, R_l, R_r, P_l, P_r, Q
+
 
 if __name__ == '__main__':
     images = load_img()
     parameters = load_intrinsics()
 
-    stereo_calibrate(images, parameters)
+    T, R, F, E, R_l, R_r, P_l, P_r, Q = stereo_calibrate(images, parameters)
+    utils.write_arrays(os.path.join(const.DIR_PARAMS, 'stereo_calibration.xml'),
+                       {
+                           'T': T,
+                           'R': R,
+                           'F': F,
+                           'E': E,
+                       })
+    utils.write_arrays(os.path.join(const.DIR_PARAMS, 'stereo_rectification.xml'),
+                       {
+                           'R_l': R_l,
+                           'R_r': R_r,
+                           'P_l': P_l,
+                           'P_r': P_r,
+                           'Q': Q
+                       })
