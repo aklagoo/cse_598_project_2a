@@ -3,76 +3,65 @@ import const
 import os
 import numpy as np
 import cv2
+from collections import namedtuple
 from matplotlib import pyplot as plt
 
-
-def load_img(dir_img: str = const.DIR_IMG, indices: tuple = (0, 0)):
-    """Loads chessboard images from left and right cameras.
-
-    Args:
-        dir_img: Path to the image directory
-        indices: Indices to select left and right images
-
-    Returns:
-        Two NumPy arrays containing image data
-    """
-    img_l = cv2.imread(os.path.join(dir_img, 'task_2\\left_{0}.png'.format(indices[0])))
-    img_r = cv2.imread(os.path.join(dir_img, 'task_2\\right_{0}.png'.format(indices[1])))
-
-    return img_l, img_r
-
-
-def load_intrinsics(dir_params: str = const.DIR_PARAMS):
-    """Loads intrinsics for left and right cameras from files.
+def extract_crn_2d_3d(img_l, img_r, grid_size=const.SIZE_GRID):
+    """Detects chessboard corners and creates 3D object points
 
     Args:
-        dir_params: Path to the intrinsics/parameters directory
+        img_l: Image from left camera
+        img_r: Image from right camera
+        grid_size: Tuple of size (rows, widths)
 
     Returns:
-        Four NumPy arrays containing camera intrinsic matrices and distortion
-        coefficients for each camera in the following order:
-
-        `left camera matrix, left distortion coefficients, right camera matrix,
-        right distortion coefficients`
+        Detected corners crn_l and crn_r
+        Corresponding object points obj_pt
     """
-    left_camera_intrinsics = utils.read_arrays(
-        os.path.join(const.DIR_PARAMS, 'left_camera_intrinsics.xml'),
-        ['cam_mtx_l', 'dst_l'])
-    right_camera_intrinsics = utils.read_arrays(
-        os.path.join(const.DIR_PARAMS, 'right_camera_intrinsics.xml'),
-        ['cam_mtx_r', 'dst_r'])
-
-    return left_camera_intrinsics['cam_mtx_l'], left_camera_intrinsics['dst_l'], \
-           right_camera_intrinsics['cam_mtx_r'], right_camera_intrinsics['dst_r']
-
-
-def stereo_calibrate(img, intrinsics):
-    """Performs camera calibration and returns rotation, translation, fundamental and essential matrices"""
-    # Extract data from arguments
-    img_l, img_r = img
-    cam_mtx_l, dst_l, cam_mtx_r, dst_r = intrinsics
-
     # Find corners from left and right images
     crn_l = cv2.findChessboardCorners(img_l, const.SIZE_GRID)[1]
     crn_r = cv2.findChessboardCorners(img_r, const.SIZE_GRID)[1]
 
     # Generate 3D object points corresponding to chessboard corners
     obj_pt = np.concatenate((
-        np.mgrid[0:const.SIZE_GRID[0], 0:const.SIZE_GRID[1]].T.reshape(-1, 2),
-        np.zeros((const.SIZE_GRID[0] * const.SIZE_GRID[1], 1))
+        np.mgrid[0:grid_size[0], 0:grid_size[1]].T.reshape(-1, 2),
+        np.zeros((grid_size[0] * grid_size[1], 1))
     ), axis=1).astype('float32')
+
+    return crn_l, crn_r, obj_pt
+
+
+def st_calib_rect(img_l, img_r, intr):
+    """Performs camera calibration and returns rotation, translation, fundamental and essential matrices
+
+    Args:
+        img_l: Image from the left camera
+        img_r: Image from the right camera
+        intr: Camera intrinsics from the left and right cameras as a namedtuple
+    """
+    # TODO Refactor function
+    # Extract data from arguments
+    img_size = img_l.shape[:2]
+
+    # Detect chessboard corners and extract 2D-3D correspondences and convert to NumPy arrays
+    crn_l, crn_r, obj_pt = extract_crn_2d_3d(img_l, img_r)
+    crn_l = np.asarray([crn_l])
+    crn_r = np.asarray([crn_r])
+    obj_pt = np.asarray([obj_pt])
 
     # Perform stereo calibration and extract rotation, translation,
     # essential and fundamental matrices
-    _params = cv2.stereoCalibrate(
-        np.array([obj_pt]), np.array([crn_l]), np.array([crn_r]),
-        cam_mtx_l, dst_l, cam_mtx_r, dst_r, (480, 640),
-        flags=cv2.CALIB_FIX_INTRINSIC)
-    _, cam_mtx_l, dst_l, cam_mtx_r, dst_r, R, T, E, F = _params
+    _params = cv2.stereoCalibrate(obj_pt, crn_l, crn_r, intr.cml, intr.dsl, intr.cmr, intr.dsr, img_size,
+                                  flags=cv2.CALIB_FIX_INTRINSIC)
+    _, _, _, _, _, rot, T, E, F = _params
 
     # Extract stereo rectification parameters
-    R_l, R_r, P_l, P_r, Q, roi_l, roi_r = cv2.stereoRectify(cam_mtx_l, dst_l, cam_mtx_r, dst_r, const.SIZE_IMG, R, T)
+    R_l, R_r, P_l, P_r, Q, _, _ = cv2.stereoRectify(intr.cml, intr.dsl, intr.cmr, intr.dsr, img_size, rot, T)
 
+    return T, rot, F, E, R_l, R_r, P_l, P_r, Q
+
+
+def generate_output(crn_l, crn_r, cam_mtx_l, dst_l, cam_mtx_r, dst_r, R, T):
     # In the following section, we verify the calibration by
     # triangulating and plotting these points in 3D. We begin by
     # undistorting the extracted corners.
@@ -98,14 +87,13 @@ def stereo_calibrate(img, intrinsics):
     utils.plot_camera(ax, R, T)
     plt.show()
 
-    return T, R, F, E, R_l, R_r, P_l, P_r, Q
-
 
 if __name__ == '__main__':
-    images = load_img()
-    parameters = load_intrinsics()
+    image_left, image_right = utils.load_img_pair(2)
+    intrinsics = utils.load_intrinsics()
 
-    T, R, F, E, R_l, R_r, P_l, P_r, Q = stereo_calibrate(images, parameters)
+    T, R, F, E, R_l, R_r, P_l, P_r, Q = st_calib_rect(image_left, image_right, intrinsics)
+
     utils.write_arrays(os.path.join(const.DIR_PARAMS, 'stereo_calibration.xml'),
                        {
                            'T': T,
