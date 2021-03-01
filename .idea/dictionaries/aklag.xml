@@ -6,7 +6,9 @@
       <w>matplotlib</w>
       <w>namedtuples</w>
       <w>undist</w>
+      <w>undistort</w>
       <w>undistorting</w>
+      <w>undistorts</w>
     </words>
   </dictionary>
 </component>
