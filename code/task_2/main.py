@@ -3,32 +3,9 @@ import const
 import os
 import numpy as np
 import cv2
-from collections import namedtuple
 from matplotlib import pyplot as plt
 
-def extract_crn_2d_3d(img_l, img_r, grid_size=const.SIZE_GRID):
-    """Detects chessboard corners and creates 3D object points
-
-    Args:
-        img_l: Image from left camera
-        img_r: Image from right camera
-        grid_size: Tuple of size (rows, widths)
-
-    Returns:
-        Detected corners crn_l and crn_r
-        Corresponding object points obj_pt
-    """
-    # Find corners from left and right images
-    crn_l = cv2.findChessboardCorners(img_l, const.SIZE_GRID)[1]
-    crn_r = cv2.findChessboardCorners(img_r, const.SIZE_GRID)[1]
-
-    # Generate 3D object points corresponding to chessboard corners
-    obj_pt = np.concatenate((
-        np.mgrid[0:grid_size[0], 0:grid_size[1]].T.reshape(-1, 2),
-        np.zeros((grid_size[0] * grid_size[1], 1))
-    ), axis=1).astype('float32')
-
-    return crn_l, crn_r, obj_pt
+from utils import extract_crn_2d_3d
 
 
 def st_calib_rect(img_l, img_r, intr):
@@ -92,7 +69,7 @@ if __name__ == '__main__':
     image_left, image_right = utils.load_img_pair(2)
     intrinsics = utils.load_intrinsics()
 
-    T, R, F, E, R_l, R_r, P_l, P_r, Q = st_calib_rect(image_left, image_right, intrinsics)
+    T, R, F, E, Rl, Rr, Pl, Pr, Q = st_calib_rect(image_left, image_right, intrinsics)
 
     utils.write_arrays(os.path.join(const.DIR_PARAMS, 'stereo_calibration.xml'),
                        {
@@ -103,9 +80,9 @@ if __name__ == '__main__':
                        })
     utils.write_arrays(os.path.join(const.DIR_PARAMS, 'stereo_rectification.xml'),
                        {
-                           'R_l': R_l,
-                           'R_r': R_r,
-                           'P_l': P_l,
-                           'P_r': P_r,
+                           'Rl': Rl,
+                           'Rr': Rr,
+                           'Pl': Pl,
+                           'Pr': Pr,
                            'Q': Q
                        })

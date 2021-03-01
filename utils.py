@@ -152,3 +152,28 @@ def load_img_pair(task_num, dir_img: str = const.DIR_IMG, indices: tuple = (0, 0
     img_r = cv2.imread(os.path.join(dir_img, 'task_{0}\\right_{1}.png'.format(d[task_num - 1], indices[1])))
 
     return img_l, img_r
+
+
+def extract_crn_2d_3d(img_l, img_r, grid_size=const.SIZE_GRID):
+    """Detects chessboard corners and creates 3D object points
+
+    Args:
+        img_l: Image from left camera
+        img_r: Image from right camera
+        grid_size: Tuple of size (rows, widths)
+
+    Returns:
+        Detected corners crn_l and crn_r
+        Corresponding object points obj_pt
+    """
+    # Find corners from left and right images
+    crn_l = cv2.findChessboardCorners(img_l, const.SIZE_GRID)[1]
+    crn_r = cv2.findChessboardCorners(img_r, const.SIZE_GRID)[1]
+
+    # Generate 3D object points corresponding to chessboard corners
+    obj_pt = np.concatenate((
+        np.mgrid[0:grid_size[0], 0:grid_size[1]].T.reshape(-1, 2),
+        np.zeros((grid_size[0] * grid_size[1], 1))
+    ), axis=1).astype('float32')
+
+    return crn_l, crn_r, obj_pt
