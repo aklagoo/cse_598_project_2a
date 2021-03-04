@@ -38,13 +38,13 @@ def st_calib_rect(img_l, img_r, intr):
     st_calib = StereoCalibParams(R, T, E, F)
 
     # Extract stereo rectification parameters
-    Rl, Rr, Pl, Pr, Q, roi_l, roi_r = cv2.stereoRectify(intr.cml, intr.dsl, intr.cmr, intr.dsr, img_size, R, T)
+    Rl, Rr, Pl, Pr, Q, _, _ = cv2.stereoRectify(intr.cml, intr.dsl, intr.cmr, intr.dsr, img_size, R, T)
     st_rect = StereoRectParams(Rl, Rr, Pl, Pr, Q)
 
-    return st_calib, st_rect, roi_l, roi_r
+    return st_calib, st_rect
 
 
-def generate_output(image_l, image_r, intrinsics, stereo_calib_params, roi_l, roi_r, stereo_rect_params, size_grid):
+def generate_output(image_l, image_r, intrinsics, stereo_calib_params, stereo_rect_params, size_grid):
     # In the following section, we verify the calibration by triangulating and plotting these points in 3D. We begin by
     # undistorting the extracted corners.
     #
@@ -89,12 +89,12 @@ def generate_output(image_l, image_r, intrinsics, stereo_calib_params, roi_l, ro
     _, crn_rect_r = cv2.findChessboardCorners(image_r_rect, size_grid)
 
     # Draw chessboard corners
-    image_l = cv2.drawChessboardCorners(image_l.copy(), const.SIZE_GRID, crn_l, True)
-    image_r = cv2.drawChessboardCorners(image_r.copy(), const.SIZE_GRID, crn_r, True)
-    image_l_undist = cv2.drawChessboardCorners(image_l_undist.copy(), const.SIZE_GRID, crn_undist_l, True)
-    image_r_undist = cv2.drawChessboardCorners(image_r_undist.copy(), const.SIZE_GRID, crn_undist_r, True)
-    image_l_rect = cv2.drawChessboardCorners(image_l_rect.copy(), const.SIZE_GRID, crn_rect_l, True)
-    image_r_rect = cv2.drawChessboardCorners(image_r_rect.copy(), const.SIZE_GRID, crn_rect_r, True)
+    image_l = cv2.drawChessboardCorners(image_l.copy(), size_grid, crn_l, True)
+    image_r = cv2.drawChessboardCorners(image_r.copy(), size_grid, crn_r, True)
+    image_l_undist = cv2.drawChessboardCorners(image_l_undist.copy(), size_grid, crn_undist_l, True)
+    image_r_undist = cv2.drawChessboardCorners(image_r_undist.copy(), size_grid, crn_undist_r, True)
+    image_l_rect = cv2.drawChessboardCorners(image_l_rect.copy(), size_grid, crn_rect_l, True)
+    image_r_rect = cv2.drawChessboardCorners(image_r_rect.copy(), size_grid, crn_rect_r, True)
 
     # Write files
     cv2.imwrite(os.path.join(const.DIR_OUT, 'image_l.png'), image_l)
@@ -116,8 +116,8 @@ if __name__ == '__main__':
     image_left, image_right = utils.load_img_pair(2)
     intr = utils.load_intrinsics()
 
-    st_calib, st_rect, roi_l, roi_r = st_calib_rect(image_left, image_right, intr)
-    generate_output(image_left, image_right, intr, st_calib, roi_l, roi_r, st_rect, const.SIZE_GRID)
+    st_calib, st_rect = st_calib_rect(image_left, image_right, intr)
+    generate_output(image_left, image_right, intr, st_calib, st_rect, const.SIZE_GRID)
 
     utils.write_arrays(os.path.join(const.DIR_PARAMS, 'stereo_calibration.xml'),
                        {

@@ -5,30 +5,6 @@ import cv2
 import numpy as np
 
 
-def load_img_batch(img_dir=const.DIR_IMG):
-    """Extracts left and right images from directory. This function is a batch version of utils.load_img_pair.
-
-    Args:
-        img_dir: Path to the image directory
-
-    Returns:
-        Two arrays containing images from the left and right cameras respectively
-    """
-    # Get list of files
-    base_path = os.path.join(img_dir, 'task_1')
-    files = [(os.path.join(base_path, x), x) for x in os.listdir(base_path)]
-    
-    # Sort files and load images
-    images_l, images_r = [], []
-    for file in files:
-        if file[1][0] == 'l':
-            images_l.append(cv2.imread(file[0]))
-        else:
-            images_r.append(cv2.imread(file[0]))
-
-    return images_l, images_r
-
-
 def extract_crn_2d_3d_batch(images_l, images_r, size_grid=const.SIZE_GRID):
     """Detects chessboard corners and creates 3D object points.
 
@@ -90,11 +66,10 @@ def write_output(image_l, image_r, corners_l, corners_r, cam_intrinsic_l, distor
         distortion_r: Distortion coefficients of the right camera
     """
     # Extract and undistort images
-    im2_l_backup, im2_r_backup = np.copy(image_l), np.copy(image_r)
-    im2_l_chk = cv2.drawChessboardCorners(image_l, const.SIZE_GRID, corners_l[3], True)
-    im2_r_chk = cv2.drawChessboardCorners(image_r, const.SIZE_GRID, corners_r[3], True)
-    im2_l_undist = cv2.undistort(im2_l_backup, cam_intrinsic_l, distortion_l, None)
-    im2_r_undist = cv2.undistort(im2_r_backup, cam_intrinsic_r, distortion_r, None)
+    im2_l_chk = cv2.drawChessboardCorners(np.copy(image_l), const.SIZE_GRID, corners_l, True)
+    im2_r_chk = cv2.drawChessboardCorners(np.copy(image_r), const.SIZE_GRID, corners_r, True)
+    im2_l_undist = cv2.undistort(np.copy(image_l), cam_intrinsic_l, distortion_l, None)
+    im2_r_undist = cv2.undistort(np.copy(image_r), cam_intrinsic_r, distortion_r, None)
 
     # Write files
     cv2.imwrite(os.path.join(const.DIR_OUT, 'task_1\\left_2.png'), image_l)
@@ -107,7 +82,7 @@ def write_output(image_l, image_r, corners_l, corners_r, cam_intrinsic_l, distor
 
 def main():
     # Load images
-    img_l, img_r = load_img_batch()
+    img_l, img_r = utils.load_img_batch(1)
     img_shape = img_l[0].shape[:2]
 
     # Extract point correspondences and calibrate the camera
@@ -122,7 +97,7 @@ def main():
     utils.write_arrays(os.path.join(const.DIR_PARAMS, 'left_camera_intrinsics.xml'),
                        {'cml': cml, 'dsl': dsl})
     utils.write_arrays(os.path.join(const.DIR_PARAMS, 'right_camera_intrinsics.xml'),
-                       {'cmr': cml, 'dsr': dsr})
+                       {'cmr': cmr, 'dsr': dsr})
 
 
 if __name__ == '__main__':

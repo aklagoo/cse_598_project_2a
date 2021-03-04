@@ -1,4 +1,5 @@
 import os
+import os.path
 from collections import namedtuple
 import numpy as np
 from math import radians, tan
@@ -136,20 +137,25 @@ def plot_camera(ax, r=np.identity(3), t=np.zeros((3, 1)), theta_x=45, theta_y=45
     ax.plot(*vertices, color='black')
 
 
-def load_img_pair(task_num, dir_img: str = const.DIR_IMG, indices: tuple = (0, 0)):
+def load_img_pair(task_num, dir_img: str = const.DIR_IMG, indices: tuple = (0, 0), gray=False):
     """Loads chessboard images from left and right cameras.
 
     Args:
         task_num: Task ID
         dir_img: Path to the image directory
-        indices: Indices to select left and right images
+        indices: Indices to select left and right
+        gray: Boolean indicating whether the image is to be loaded as a grayscale image or not
 
     Returns:
         Two NumPy arrays containing image data
     """
+    if gray:
+        color = cv2.IMREAD_GRAYSCALE
+    else:
+        color = cv2.IMREAD_COLOR
     d = ['1', '2', '3_and_4', '3_and_4']
-    img_l = cv2.imread(os.path.join(dir_img, 'task_{0}\\left_{1}.png'.format(d[task_num - 1], indices[0])))
-    img_r = cv2.imread(os.path.join(dir_img, 'task_{0}\\right_{1}.png'.format(d[task_num - 1], indices[1])))
+    img_l = cv2.imread(os.path.join(dir_img, 'task_{0}\\left_{1}.png'.format(d[task_num - 1], indices[0])), color)
+    img_r = cv2.imread(os.path.join(dir_img, 'task_{0}\\right_{1}.png'.format(d[task_num - 1], indices[1])), color)
 
     return img_l, img_r
 
@@ -177,3 +183,30 @@ def extract_crn_2d_3d(img_l, img_r, grid_size=const.SIZE_GRID):
     ), axis=1).astype('float32')
 
     return crn_l, crn_r, obj_pt
+
+
+def load_img_batch(task_num, img_dir=const.DIR_IMG, gray=False):
+    """Extracts left and right images from directory. This function is a batch version of utils.load_img_pair.
+
+    Args:
+        task_num: Task ID
+        img_dir: Path to the image directory
+        gray: Boolean indicating whether the images are to be loaded as grayscale images or not
+
+    Returns:
+        Two arrays containing images from the left and right cameras respectively
+    """
+    # Get list of files
+    d = ['1', '2', '3_and_4', '3_and_4']
+    base_path = os.path.join(img_dir, 'task_{0}'.format(d[task_num - 1]))
+    files = [(os.path.join(base_path, x), x) for x in os.listdir(base_path)]
+
+    # Sort files and load images
+    images_l, images_r = [], []
+    for file in files:
+        if file[1][0] == 'l':
+            images_l.append(cv2.imread(file[0]))
+        else:
+            images_r.append(cv2.imread(file[0]))
+
+    return images_l, images_r
