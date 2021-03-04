@@ -69,7 +69,7 @@ def load_intrinsics(dir_params: str = const.DIR_PARAMS):
 
 
 def load_st_params(dir_params: str = const.DIR_PARAMS):
-    """Load stereo calibration and rectification matrices
+    """Load stereo calibration and rectification matrices.
 
     Args:
         dir_params: Path to the calibration and rectification parameters directory
@@ -161,7 +161,7 @@ def load_img_pair(task_num, dir_img: str = const.DIR_IMG, indices: tuple = (0, 0
 
 
 def extract_crn_2d_3d(img_l, img_r, grid_size=const.SIZE_GRID):
-    """Detects chessboard corners and creates 3D object points
+    """Detects chessboard corners and creates 3D object points.
 
     Args:
         img_l: Image from left camera

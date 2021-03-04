@@ -97,12 +97,12 @@ def generate_output(image_l, image_r, intrinsics, stereo_calib_params, stereo_re
     image_r_rect = cv2.drawChessboardCorners(image_r_rect.copy(), size_grid, crn_rect_r, True)
 
     # Write files
-    cv2.imwrite(os.path.join(const.DIR_OUT, 'image_l.png'), image_l)
-    cv2.imwrite(os.path.join(const.DIR_OUT, 'image_r.png'), image_r)
-    cv2.imwrite(os.path.join(const.DIR_OUT, 'image_l_undist.png'), image_l_undist)
-    cv2.imwrite(os.path.join(const.DIR_OUT, 'image_r_undist.png'), image_r_undist)
-    cv2.imwrite(os.path.join(const.DIR_OUT, 'image_l_rect.png'), image_l_rect)
-    cv2.imwrite(os.path.join(const.DIR_OUT, 'image_r_rect.png'), image_r_rect)
+    cv2.imwrite(os.path.join(const.DIR_OUT, 'task_2\\image_l.png'), image_l)
+    cv2.imwrite(os.path.join(const.DIR_OUT, 'task_2\\image_r.png'), image_r)
+    cv2.imwrite(os.path.join(const.DIR_OUT, 'task_2\\image_l_undist.png'), image_l_undist)
+    cv2.imwrite(os.path.join(const.DIR_OUT, 'task_2\\image_r_undist.png'), image_r_undist)
+    cv2.imwrite(os.path.join(const.DIR_OUT, 'task_2\\image_l_rect.png'), image_l_rect)
+    cv2.imwrite(os.path.join(const.DIR_OUT, 'task_2\\image_r_rect.png'), image_r_rect)
 
     # Rectified camera
     ax_rect = fig.add_subplot(122, projection='3d')
